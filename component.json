@@ -1,0 +1,14 @@
+{
+  "name": "rest",
+  "repo": "ericgj/rest",
+  "description": "Simple REST wrapper for superagent",
+  "version": "0.0.1",
+  "keywords": [],
+  "dependencies": {},
+  "development": {},
+  "license": "MIT",
+  "main": "index.js",
+  "scripts": [
+    "index.js"
+  ]
+}
