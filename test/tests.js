@@ -66,6 +66,12 @@ describe('REST', function(){
       })
     })
 
+    it('should set Accept header to specified type if given', function(){
+      var exp = 'application/foo';
+      var act = listOne.type(exp).get()._request.getHeader('accept')
+      assert.equal(act,exp);
+    })
+
   })
 })
 

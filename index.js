@@ -49,13 +49,13 @@ Resource.prototype.head = function(vars){
 
 Resource.prototype.post = function(vars){
   var args = [].slice.call(arguments,1) 
-    , body = (this.write ? this.write.apply(this,args) : null)
+    , body = (this.write ? this.write.apply(this,args) : args[0])
   return this.request('post',vars,body);
 }
 
 Resource.prototype.put = function(vars){
   var args = [].slice.call(arguments,1) 
-    , body = (this.write ? this.write.apply(this,args) : null)
+    , body = (this.write ? this.write.apply(this,args) : args[0])
   return this.request('put',vars,body);
 }
 
@@ -78,6 +78,7 @@ Resource.prototype.end = function(fn){
 }
 
 Resource.prototype.request = function(meth,vars,body){
+  vars = vars || {};
 
   // path resolution
   var _vars = {};
