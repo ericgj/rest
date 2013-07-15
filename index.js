@@ -1,4 +1,6 @@
 var request = require('superagent')
+  , Collection = require('collection')
+  , has = Object.hasOwnProperty
 
 module.exports = REST;
 
@@ -6,6 +8,11 @@ function REST(path){
   REST.resources = REST.resources || {};
   var resource = REST.resources[path] = (REST.resources[path] || new Resource(path))
   return resource;
+}
+
+REST.collect = function(items,klass){
+  items = ( isArray(items) ? items : [items] );
+  return new Collection(items).map( function(it){ return new klass(it); });
 }
 
 function Resource(path){
@@ -91,6 +98,10 @@ Resource.prototype.request = function(meth,vars,body){
 }
 
 // private
+
+var isArray = Array.isArray || function (val) {
+  return !! val && '[object Array]' == Object.prototype.toString.call(val);
+};
 
 function parserWrap(endFn, parseFn){
   return function(err,res){

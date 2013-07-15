@@ -5,9 +5,12 @@
   "version": "0.0.2",
   "keywords": [],
   "dependencies": {
-    "visionmedia/superagent": "*"  
+    "visionmedia/superagent": "*",  
+    "component/collection": "*"
   },
-  "development": {},
+  "development": {
+    "timoxley/assert": "*"
+  },
   "license": "MIT",
   "main": "index.js",
   "scripts": [
