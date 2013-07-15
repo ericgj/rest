@@ -1,75 +1,98 @@
 var request = require('superagent')
-  , has = Object.hasOwnProperty 
 
 module.exports = REST;
 
-function REST(path,endpt){
-  REST.endpoints = REST.endpoints || {};
-  if (endpt) {
-    REST.endpoints[path] = endpt
-  } else {
-    endpt = REST.endpoints[path] = (REST.endpoints[path] || {})
-  }
-  return endpt;
+function REST(path){
+  REST.resources = REST.resources || {};
+  var resource = REST.resources[path] = (REST.resources[path] || new Resource(path))
+  return resource;
 }
 
-REST.headers = function(hdrs){
+function Resource(path){
+  if (!(this instanceof Resource)) return new Resource(path);
+  this.path = path;
+  return this;
+}
+
+Resource.prototype.headers = function(headers){
   this._headers = this._headers || {};
-  for (var h in hdrs){
-    this._headers[h] = hdrs[h];
-  }
+  for (var h in headers) this._headers[h] = headers[h];
   return this;
 }
 
-REST.clearHeaders = function(){
-  this._headers = {};
+/* note this sets the Accept header, not Content-Type */
+Resource.prototype.type = function(type){
+  this._type = type;
   return this;
 }
 
-REST.get = function(path,vars,fn){
-  return this.send('get',path,vars,fn);
+Resource.prototype.query = function(val){
+  if (!this._request) return this;
+  this._request.query(val);
+  return this;
 }
 
-REST.head = function(path,vars,fn){
-  return this.send('head',path,vars,fn);
+Resource.prototype.get = function(vars){
+  return this.request('get',vars);
 }
 
-REST.post = function(path,vars,fn){
-  return this.send('post',path,vars,fn);
+Resource.prototype.head = function(vars){
+  return this.request('head',vars);
 }
 
-REST.put = function(path,vars,fn){
-  return this.send('put',path,vars,fn);
+Resource.prototype.post = function(vars){
+  var args = [].slice.call(arguments,1) 
+    , body = (this.write ? this.write.apply(this,args) : null)
+  return this.request('post',vars,body);
 }
 
-REST.delete = REST.del = function(path,vars,fn){
-  return this.send('del',path,vars,fn);
+Resource.prototype.put = function(vars){
+  var args = [].slice.call(arguments,1) 
+    , body = (this.write ? this.write.apply(this,args) : null)
+  return this.request('put',vars,body);
 }
 
-REST.patch = function(path,vars,fn){
-  return this.send('patch',path,vars,fn);
+Resource.prototype.delete = Resource.prototype.del = function(){
+  return this.request('del');
 }
 
-REST.send = function(meth,path,vars,fn){
-  if ('function' == typeof vars){
-    fn = vars; vars = {};
-  }
-  if (fn) fn = wrap(fn, this.endpoints[path][meth]);
-  var hdrs = this._headers || {};
-  
+Resource.prototype.patch = function(vars){
+  var args = [].slice.call(arguments,1) 
+    , body = (this.diff ? this.diff.apply(this,args) : null)
+  return this.request('patch',vars,body);
+}
+
+
+Resource.prototype.end = function(fn){
+  if (!this._request) return this;
+  if (fn) fn = parserWrap(fn, this.read);
+  this._request.end(fn);
+  return this;
+}
+
+Resource.prototype.request = function(meth,vars,body){
+
+  // path resolution
   var _vars = {};
   for (var v in vars) _vars[v] = vars[v];
 
   if (meth == 'del'){
-    return request.set(hdrs)[meth]( resolved(path,_vars), fn ); 
+    this._request = request[meth]( resolved(this.path,_vars) ); 
   } else {
-    return request.set(hdrs)[meth]( resolved(path,_vars), _vars, fn ); 
+    this._request = request[meth]( resolved(this.path,_vars), _vars ); 
   }
+
+  if (body) this._request.send(body);
+  if (this._headers) this._request.set(this._headers);
+  if (this._type && (meth == 'get' || meth == 'head')) 
+    this._request.set('Accept', this._type);
+
+  return this;
 }
 
 // private
 
-function wrap(endFn, parseFn){
+function parserWrap(endFn, parseFn){
   return function(err,res){
     var obj = (parseFn ? parseFn(res.body) : res.body)
     endFn(err,obj,res);

@@ -2,9 +2,11 @@
   "name": "rest",
   "repo": "ericgj/rest",
   "description": "Simple REST wrapper for superagent",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "keywords": [],
-  "dependencies": {},
+  "dependencies": {
+    "visionmedia/superagent": "*"  
+  },
   "development": {},
   "license": "MIT",
   "main": "index.js",
