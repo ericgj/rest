@@ -18,7 +18,7 @@ function Contact(attrs){
 // resources
 
 var listAll = REST('/contact-list/all')
-listAll.read = function(raw){
+listAll.parse = function(raw){
   return {
     contactLists: REST.collect(raw.contactLists, ContactList),
     total: raw.meta.total,
@@ -27,12 +27,21 @@ listAll.read = function(raw){
 }
 
 var listOne = REST('/contact-list/:id')
-listOne.read = function(raw){
+listOne.parse = function(raw){
   return {
     contactList: new ContactList(raw.contactList),
     contacts: REST.collect(raw.contacts, Contact)
   }
 }
+
+var listContacts = REST('/contact-list/:id/contact')
+listContacts.dump = function(contacts){
+  return {
+    contacts: contacts
+  }
+}
+
+var lists = REST('/contact-list')
 
 
 function setupFixtures(type,done){
@@ -68,10 +77,33 @@ describe('REST', function(){
 
     it('should set Accept header to specified type if given', function(){
       var exp = 'application/foo';
-      var act = listOne.type(exp).get()._request.getHeader('accept')
+      var act = listOne.type(exp).get().request.getHeader('accept')
       assert.equal(act,exp);
     })
 
   })
-})
 
+  describe('post/put', function(done){
+    
+
+    // TODO improve this so it doesn't rely on checking private _data
+
+    it('/contact-list should default the body to the passed model', function(){
+      lists.post({}, new ContactList({name: 'Friends'}) );
+      assert.equal('Friends', lists.request._data['name']);
+    })
+
+    it('/contact-list/:id/contact should set the body to include contacts from passed models', function(){
+      var contacts = [ new Contact({id: 1}), new Contact({id: 7}), new Contact({id: 13}) ]
+      listContacts.put({id: 3}, contacts);
+      var act = listContacts.request._data['contacts'];
+      var exp = [1,7,13];
+      assert.equal(act.length,exp.length);
+      for (var i=0;i<act.length;++i){
+        assert.equal(act[i].id,exp[i]);
+      }
+    })
+
+  })
+
+})

@@ -34,50 +34,56 @@ Resource.prototype.type = function(type){
 }
 
 Resource.prototype.query = function(val){
-  if (!this._request) return this;
-  this._request.query(val);
+  if (!this.request) return this;
+  this.request.query(val);
   return this;
 }
 
 Resource.prototype.get = function(vars){
-  return this.request('get',vars);
+  this.build('get',vars);
+  return this;
 }
 
 Resource.prototype.head = function(vars){
-  return this.request('head',vars);
+  this.build('head',vars);
+  return this;
 }
 
 Resource.prototype.post = function(vars){
   var args = [].slice.call(arguments,1) 
-    , body = (this.write ? this.write.apply(this,args) : args[0])
-  return this.request('post',vars,body);
+    , body = (this.dump ? this.dump.apply(this,args) : args[0])
+  this.build('post',vars,body);
+  return this;
 }
 
 Resource.prototype.put = function(vars){
   var args = [].slice.call(arguments,1) 
-    , body = (this.write ? this.write.apply(this,args) : args[0])
-  return this.request('put',vars,body);
+    , body = (this.dump ? this.dump.apply(this,args) : args[0])
+  this.build('put',vars,body);
+  return this;
 }
 
 Resource.prototype.delete = Resource.prototype.del = function(){
-  return this.request('del');
+  this.build('del');
+  return this;
 }
 
 Resource.prototype.patch = function(vars){
   var args = [].slice.call(arguments,1) 
     , body = (this.diff ? this.diff.apply(this,args) : null)
-  return this.request('patch',vars,body);
+  this.build('patch',vars,body);
+  return this;
 }
 
 
 Resource.prototype.end = function(fn){
-  if (!this._request) return this;
-  if (fn) fn = parserWrap(fn, this.read);
-  this._request.end(fn);
+  if (!this.request) return this;
+  if (fn) fn = parserWrap(fn, this.parse);
+  this.request.end(fn);
   return this;
 }
 
-Resource.prototype.request = function(meth,vars,body){
+Resource.prototype.build = function(meth,vars,body){
   vars = vars || {};
 
   // path resolution
@@ -85,15 +91,15 @@ Resource.prototype.request = function(meth,vars,body){
   for (var v in vars) _vars[v] = vars[v];
 
   if (meth == 'del'){
-    this._request = request[meth]( resolved(this.path,_vars) ); 
+    this.request = request[meth]( resolved(this.path,_vars) ); 
   } else {
-    this._request = request[meth]( resolved(this.path,_vars), _vars ); 
+    this.request = request[meth]( resolved(this.path,_vars), _vars ); 
   }
 
-  if (body) this._request.send(body);
-  if (this._headers) this._request.set(this._headers);
+  if (body) this.request.send(body);
+  if (this._headers) this.request.set(this._headers);
   if (this._type && (meth == 'get' || meth == 'head')) 
-    this._request.set('Accept', this._type);
+    this.request.set('Accept', this._type);
 
   return this;
 }

@@ -73,14 +73,9 @@ function initdb(type){
 }
 
 
-var fixtures = {}
+// fixtures
 
-/*
-var lists = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-for (var i=0;i<lists.length;++i) {
-  fixtures['default'].lists.push({id: i, name: lists[i]});
-}
-*/
+var fixtures = {}
 
 fixtures.default = {
   lists: [
